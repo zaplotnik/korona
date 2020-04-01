@@ -535,12 +535,19 @@ while day < Nt:
      
     # # indices of all hospitalised nodes
     # inc_hosp = np.random.choice(inc_ons, size = n_hosp, replace=False )
-
-    # seperate hospitalized into 
-    pd = dr/hr #death
-    pc = cr/hr #critical
-    ps = sr/hr #severe
-    bog = np.random.choice(3,n_hosp,p=[pd,pc,ps],replace=True)
+    
+    Nicu = np.sum(status_hospitalized_dead+status_hospitalized_critical)
+    if Nicu < res_num:
+        # seperate hospitalized into 
+        pd = dr/hr #death
+        pc = cr/hr #critical
+        ps = sr/hr #severe
+        bog = np.random.choice(3,n_hosp,p=[pd,pc,ps],replace=True)
+    else:
+        pd = (dr + dr_cr_wc*cr + dr_sr_wc*sr)/hr
+        pc = (cr - dr_cr_wc*cr)/hr
+        ps = (sr - dr_sr_wc*sr)/hr
+        bog = np.random.choice(3,n_hosp,p=[pd,pc,ps],replace=True)
 
     inc_hosp_dead = inc_hosp[bog==0]
     hospitalization_period_dead[inc_hosp_dead] = stats.lognorm.rvs(ihd1,ihd2,ihd3,size=len(inc_hosp_dead)) # starting the death count
@@ -665,16 +672,16 @@ print "Simulation finished"
 print ""
 print "Saving fields"
 # save fields
-np.savetxt("./2020_03_29/tab_days_{:03d}.txt".format(run),tab_days,fmt='%8d')
-np.savetxt("./2020_03_29/tab_active_{:03d}.txt".format(run),tab_active,fmt='%8d')
-np.savetxt("./2020_03_29/tab_infectious_{:03d}.txt".format(run),tab_infectious,fmt='%8d')
-np.savetxt("./2020_03_29/tab_incubation_{:03d}.txt".format(run),tab_incubation,fmt='%8d')
-np.savetxt("./2020_03_29/tab_symptoms_{:03d}.txt".format(run),tab_symptoms,fmt='%8d')
-np.savetxt("./2020_03_29/tab_hospitalized_{:03d}.txt".format(run),tab_hospitalized,fmt='%8d')
-np.savetxt("./2020_03_29/tab_icu_{:03d}.txt".format(run), tab_icu,fmt='%8d')
-np.savetxt("./2020_03_29/tab_dead_{:03d}.txt".format(run), tab_dead,fmt='%8d')
-np.savetxt("./2020_03_29/tab_immune_{:03d}.txt".format(run), tab_immune,fmt='%8d')
-np.savetxt("./2020_03_29/tab_susceptible_{:03d}.txt".format(run), tab_susceptible,fmt='%8d')
+np.savetxt("./overblown/tab_days_{:03d}.txt".format(run),tab_days,fmt='%8d')
+np.savetxt("./overblown/tab_active_{:03d}.txt".format(run),tab_active,fmt='%8d')
+np.savetxt("./overblown/tab_infectious_{:03d}.txt".format(run),tab_infectious,fmt='%8d')
+np.savetxt("./overblown/tab_incubation_{:03d}.txt".format(run),tab_incubation,fmt='%8d')
+np.savetxt("./overblown/tab_symptoms_{:03d}.txt".format(run),tab_symptoms,fmt='%8d')
+np.savetxt("./overblown/tab_hospitalized_{:03d}.txt".format(run),tab_hospitalized,fmt='%8d')
+np.savetxt("./overblown/tab_icu_{:03d}.txt".format(run), tab_icu,fmt='%8d')
+np.savetxt("./overblown/tab_dead_{:03d}.txt".format(run), tab_dead,fmt='%8d')
+np.savetxt("./overblown/tab_immune_{:03d}.txt".format(run), tab_immune,fmt='%8d')
+np.savetxt("./overblown/tab_susceptible_{:03d}.txt".format(run), tab_susceptible,fmt='%8d')
 
 # np.savetxt("./save/day_infected_{:03d}.txt".format(run),day_infected) 
 # np.savetxt("./save/rands_input_{:03d}.txt".format(run),rands)  

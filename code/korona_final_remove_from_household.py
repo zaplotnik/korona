@@ -28,12 +28,8 @@ run = int(sys.argv[1])
 
 ### PARAMETERS ###
 
-isolate_from_family = False
-day_isolate = 20 # 20 = 1.april
-
-
 # healthcare capacity
-res_num = 75
+res_num = 171
 beds = 590
 
 #  number of nodes
@@ -391,7 +387,7 @@ connections_other,connection_other_max = generate_connections2.others(connection
 
 #%% SIMULATE VIRUS SPREAD       
         
-Nt = 120
+Nt = 220
 tab_days = np.zeros(Nt+1)
 tab_active = np.zeros(Nt+1)
 tab_infectious = np.zeros(Nt+1)
@@ -424,7 +420,7 @@ tab_dead[day] = Ndead
 tab_immune[day] = Nimmune
 tab_susceptible[day] = Nsusceptible
 
-all_isolated = np.array([],dtype=np.int)
+
 while day < Nt:
     
     status_susceptible_old = np.copy(status_susceptible)
@@ -494,14 +490,9 @@ while day < Nt:
     inc_ind = np.where((-0.5 < incubation_period) & (incubation_period < 0.5))[0]
     status_incubation[inc_ind] = 0
     status_onset[inc_ind] = 1
-    
-    if isolate_from_family:
-        if day >= day_isolate:
-            inc_choice = np.random.choice(inc_ind,int((1-asymptomatic_ratio)*len(inc_ind)),replace=False)
-            #print inc_choice
-            all_isolated = np.concatenate((all_isolated,inc_choice))
-            connection_family_max[all_isolated] = 0
-            connection_other_max[all_isolated] = 0
+
+    inc_choice = np.random.choice(inc_ind,int((1-asymptomatic_ratio)*len(inc_ind)))
+    connection_family_max[inc_choice] = 0
                 
     # where infectiousnees period start < 0.5 --> status = infectious
     inc_inf_start = np.where((-0.5 < infectious_period_start) & (infectious_period_start < 0.5))[0]
@@ -654,10 +645,6 @@ while day < Nt:
     
     connections_other,connection_other_max = generate_connections2.others(connections_other,\
                                                         rands_input,rands_input_sorted,k+1.,theta)
-    if isolate_from_family:
-        if day >= day_isolate+1:
-            connection_other_max[all_isolated] = 0
-
     print ""
 
 
@@ -665,16 +652,16 @@ print "Simulation finished"
 print ""
 print "Saving fields"
 # save fields
-np.savetxt("./2020_03_29/tab_days_{:03d}.txt".format(run),tab_days,fmt='%8d')
-np.savetxt("./2020_03_29/tab_active_{:03d}.txt".format(run),tab_active,fmt='%8d')
-np.savetxt("./2020_03_29/tab_infectious_{:03d}.txt".format(run),tab_infectious,fmt='%8d')
-np.savetxt("./2020_03_29/tab_incubation_{:03d}.txt".format(run),tab_incubation,fmt='%8d')
-np.savetxt("./2020_03_29/tab_symptoms_{:03d}.txt".format(run),tab_symptoms,fmt='%8d')
-np.savetxt("./2020_03_29/tab_hospitalized_{:03d}.txt".format(run),tab_hospitalized,fmt='%8d')
-np.savetxt("./2020_03_29/tab_icu_{:03d}.txt".format(run), tab_icu,fmt='%8d')
-np.savetxt("./2020_03_29/tab_dead_{:03d}.txt".format(run), tab_dead,fmt='%8d')
-np.savetxt("./2020_03_29/tab_immune_{:03d}.txt".format(run), tab_immune,fmt='%8d')
-np.savetxt("./2020_03_29/tab_susceptible_{:03d}.txt".format(run), tab_susceptible,fmt='%8d')
+np.savetxt("./save6/tab_days_{:03d}.txt".format(run),tab_days,fmt='%8d')
+np.savetxt("./save6/tab_active_{:03d}.txt".format(run),tab_active,fmt='%8d')
+np.savetxt("./save6/tab_infectious_{:03d}.txt".format(run),tab_infectious,fmt='%8d')
+np.savetxt("./save6/tab_incubation_{:03d}.txt".format(run),tab_incubation,fmt='%8d')
+np.savetxt("./save6/tab_symptoms_{:03d}.txt".format(run),tab_symptoms,fmt='%8d')
+np.savetxt("./save6/tab_hospitalized_{:03d}.txt".format(run),tab_hospitalized,fmt='%8d')
+np.savetxt("./save6/tab_icu_{:03d}.txt".format(run), tab_icu,fmt='%8d')
+np.savetxt("./save6/tab_dead_{:03d}.txt".format(run), tab_dead,fmt='%8d')
+np.savetxt("./save6/tab_immune_{:03d}.txt".format(run), tab_immune,fmt='%8d')
+np.savetxt("./save6/tab_susceptible_{:03d}.txt".format(run), tab_susceptible,fmt='%8d')
 
 # np.savetxt("./save/day_infected_{:03d}.txt".format(run),day_infected) 
 # np.savetxt("./save/rands_input_{:03d}.txt".format(run),rands)  

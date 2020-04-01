@@ -14,4 +14,4 @@ stop = int(sys.argv[2])
 
 for i in range(start,stop):
     print i
-    subprocess.call("python korona_final.py {0}".format(i),shell=True)
+    subprocess.call("python korona_final_spike.py {0}".format(i),shell=True)

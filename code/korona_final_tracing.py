@@ -28,9 +28,13 @@ run = int(sys.argv[1])
 
 ### PARAMETERS ###
 
-isolate_from_family = False
+isolate_from_family = True
 day_isolate = 20 # 20 = 1.april
 
+contact_tracing = True
+day_start_tracing = 20
+tracing_length = 7 # how many days before incubation
+tracing_efficiency = 0.5 # 50%
 
 # healthcare capacity
 res_num = 75
@@ -424,7 +428,13 @@ tab_dead[day] = Ndead
 tab_immune[day] = Nimmune
 tab_susceptible[day] = Nsusceptible
 
-all_isolated = np.array([],dtype=np.int)
+
+connections_all = np.zeros((7,N,maxc_other),dtype=np.int32)
+connection_max_all = np.zeros((7,N),dtype=np.int32)
+
+all_isolated = np.array([],dtype=np.int32)
+even_more_isolated = np.array([],dtype=np.int32)
+
 while day < Nt:
     
     status_susceptible_old = np.copy(status_susceptible)
@@ -494,7 +504,7 @@ while day < Nt:
     inc_ind = np.where((-0.5 < incubation_period) & (incubation_period < 0.5))[0]
     status_incubation[inc_ind] = 0
     status_onset[inc_ind] = 1
-    
+     
     if isolate_from_family:
         if day >= day_isolate:
             inc_choice = np.random.choice(inc_ind,int((1-asymptomatic_ratio)*len(inc_ind)),replace=False)
@@ -502,7 +512,31 @@ while day < Nt:
             all_isolated = np.concatenate((all_isolated,inc_choice))
             connection_family_max[all_isolated] = 0
             connection_other_max[all_isolated] = 0
-                
+ 
+    if contact_tracing:
+        # save connections
+        if day >= (day_start_tracing - tracing_length):
+            for i in range(tracing_length-1,0,-1):
+                connections_all[i] = connections_all[i-1]
+                connection_max_all[i] = connection_max_all[i-1]
+
+            connections_all[0] = connections_other
+            connection_max_all[0] = connection_other_max
+   
+    if contact_tracing:
+        if day >= day_start_tracing:       
+            # from all of those out of incubation period, randomly choose symptomatic (60%)
+            inc_choice = np.random.choice(inc_ind,int((1-asymptomatic_ratio)*len(inc_ind)),replace=False)
+            
+            for j in inc_choice:
+                for i in range(tracing_length-1,-1,-1):
+                    isol_dm = connections_all[i,j,:connection_max_all[i,j]]#.flatten()
+                    cc = np.random.choice(isol_dm,int(tracing_efficiency*len(isol_dm)),replace=False)
+                    even_more_isolated = np.concatenate((even_more_isolated,cc))                
+
+            connection_family_max[even_more_isolated] = 0
+            connection_other_max[even_more_isolated] = 0
+
     # where infectiousnees period start < 0.5 --> status = infectious
     inc_inf_start = np.where((-0.5 < infectious_period_start) & (infectious_period_start < 0.5))[0]
     status_infectious[inc_inf_start] = 1
@@ -657,7 +691,9 @@ while day < Nt:
     if isolate_from_family:
         if day >= day_isolate+1:
             connection_other_max[all_isolated] = 0
-
+    if contact_tracing:
+        if day >= day_isolate+1:
+            connection_other_max[even_more_isolated] = 0
     print ""
 
 
@@ -665,16 +701,16 @@ print "Simulation finished"
 print ""
 print "Saving fields"
 # save fields
-np.savetxt("./2020_03_29/tab_days_{:03d}.txt".format(run),tab_days,fmt='%8d')
-np.savetxt("./2020_03_29/tab_active_{:03d}.txt".format(run),tab_active,fmt='%8d')
-np.savetxt("./2020_03_29/tab_infectious_{:03d}.txt".format(run),tab_infectious,fmt='%8d')
-np.savetxt("./2020_03_29/tab_incubation_{:03d}.txt".format(run),tab_incubation,fmt='%8d')
-np.savetxt("./2020_03_29/tab_symptoms_{:03d}.txt".format(run),tab_symptoms,fmt='%8d')
-np.savetxt("./2020_03_29/tab_hospitalized_{:03d}.txt".format(run),tab_hospitalized,fmt='%8d')
-np.savetxt("./2020_03_29/tab_icu_{:03d}.txt".format(run), tab_icu,fmt='%8d')
-np.savetxt("./2020_03_29/tab_dead_{:03d}.txt".format(run), tab_dead,fmt='%8d')
-np.savetxt("./2020_03_29/tab_immune_{:03d}.txt".format(run), tab_immune,fmt='%8d')
-np.savetxt("./2020_03_29/tab_susceptible_{:03d}.txt".format(run), tab_susceptible,fmt='%8d')
+np.savetxt("./save_tracing/tab_days_{:03d}.txt".format(run),tab_days,fmt='%8d')
+np.savetxt("./save_tracing/tab_active_{:03d}.txt".format(run),tab_active,fmt='%8d')
+np.savetxt("./save_tracing/tab_infectious_{:03d}.txt".format(run),tab_infectious,fmt='%8d')
+np.savetxt("./save_tracing/tab_incubation_{:03d}.txt".format(run),tab_incubation,fmt='%8d')
+np.savetxt("./save_tracing/tab_symptoms_{:03d}.txt".format(run),tab_symptoms,fmt='%8d')
+np.savetxt("./save_tracing/tab_hospitalized_{:03d}.txt".format(run),tab_hospitalized,fmt='%8d')
+np.savetxt("./save_tracing/tab_icu_{:03d}.txt".format(run), tab_icu,fmt='%8d')
+np.savetxt("./save_tracing/tab_dead_{:03d}.txt".format(run), tab_dead,fmt='%8d')
+np.savetxt("./save_tracing/tab_immune_{:03d}.txt".format(run), tab_immune,fmt='%8d')
+np.savetxt("./save_tracing/tab_susceptible_{:03d}.txt".format(run), tab_susceptible,fmt='%8d')
 
 # np.savetxt("./save/day_infected_{:03d}.txt".format(run),day_infected) 
 # np.savetxt("./save/rands_input_{:03d}.txt".format(run),rands)  
