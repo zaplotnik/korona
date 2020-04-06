@@ -665,16 +665,16 @@ print "Simulation finished"
 print ""
 print "Saving fields"
 # save fields
-np.savetxt("./2020_03_29/tab_days_{:03d}.txt".format(run),tab_days,fmt='%8d')
-np.savetxt("./2020_03_29/tab_active_{:03d}.txt".format(run),tab_active,fmt='%8d')
-np.savetxt("./2020_03_29/tab_infectious_{:03d}.txt".format(run),tab_infectious,fmt='%8d')
-np.savetxt("./2020_03_29/tab_incubation_{:03d}.txt".format(run),tab_incubation,fmt='%8d')
-np.savetxt("./2020_03_29/tab_symptoms_{:03d}.txt".format(run),tab_symptoms,fmt='%8d')
-np.savetxt("./2020_03_29/tab_hospitalized_{:03d}.txt".format(run),tab_hospitalized,fmt='%8d')
-np.savetxt("./2020_03_29/tab_icu_{:03d}.txt".format(run), tab_icu,fmt='%8d')
-np.savetxt("./2020_03_29/tab_dead_{:03d}.txt".format(run), tab_dead,fmt='%8d')
-np.savetxt("./2020_03_29/tab_immune_{:03d}.txt".format(run), tab_immune,fmt='%8d')
-np.savetxt("./2020_03_29/tab_susceptible_{:03d}.txt".format(run), tab_susceptible,fmt='%8d')
+np.savetxt("./save_spike/tab_days_{:03d}.txt".format(run),tab_days,fmt='%8d')
+np.savetxt("./save_spike/tab_active_{:03d}.txt".format(run),tab_active,fmt='%8d')
+np.savetxt("./save_spike/tab_infectious_{:03d}.txt".format(run),tab_infectious,fmt='%8d')
+np.savetxt("./save_spike/tab_incubation_{:03d}.txt".format(run),tab_incubation,fmt='%8d')
+np.savetxt("./save_spike/tab_symptoms_{:03d}.txt".format(run),tab_symptoms,fmt='%8d')
+np.savetxt("./save_spike/tab_hospitalized_{:03d}.txt".format(run),tab_hospitalized,fmt='%8d')
+np.savetxt("./save_spike/tab_icu_{:03d}.txt".format(run), tab_icu,fmt='%8d')
+np.savetxt("./save_spike/tab_dead_{:03d}.txt".format(run), tab_dead,fmt='%8d')
+np.savetxt("./save_spike/tab_immune_{:03d}.txt".format(run), tab_immune,fmt='%8d')
+np.savetxt("./save_spike/tab_susceptible_{:03d}.txt".format(run), tab_susceptible,fmt='%8d')
 
 # np.savetxt("./save/day_infected_{:03d}.txt".format(run),day_infected) 
 # np.savetxt("./save/rands_input_{:03d}.txt".format(run),rands)  

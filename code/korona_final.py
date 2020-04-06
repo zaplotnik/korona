@@ -276,6 +276,28 @@ hospitalization_period_severe[hosp_p_severe] = stats.lognorm.rvs(ihln1, ihln2, i
 status_hospitalized_severe[hosp_p_severe] = 1 
 
 
+# now remove people from home recovery
+inc_home = np.where(home_recovery_period < 0.5)[0]
+status_home[inc_home] = 0
+status_active[inc_home] = 0
+
+# now remove living/deceased from hospitals
+inc_hosp_dead = np.where(hospitalization_period_dead < 0.5)[0]
+status_hospitalized_dead[inc_hosp_dead] = 0
+status_dead[inc_hosp_dead] = 1
+status_active[inc_hosp_dead] = 0
+    
+inc_hosp_critical = np.where(hospitalization_period_critical < 0.5)[0]
+status_hospitalized_critical[inc_hosp_critical] = 0
+status_immune[inc_hosp_critical] = 1
+status_active[inc_hosp_critical] = 0
+    
+inc_hosp_severe = np.where(hospitalization_period_severe < 0.5)[0]
+status_hospitalized_severe[inc_hosp_severe] = 0 
+status_immune[inc_hosp_severe] = 1
+status_active[inc_hosp_severe] = 0
+
+
 Nactive   = np.sum(status_active)
 Nincubation =  np.sum(status_incubation)
 Ninfectious = np.sum(status_infectious)
@@ -642,11 +664,11 @@ while day < Nt:
     
     # ukrepi 16. marca
     if day == 4:
-        rands = rands/np.random.uniform(3.0,4.5) # /8.
+        rands = rands/np.random.uniform(3.5,4.5) # /8.
     
-    # ukrepi 18.marca
+    # ukrepi 20.marca
     if day == 8:
-        rands = rands/np.random.uniform(1.2,3.) # /2.
+        rands = rands/np.random.uniform(1.5,3.) # /2.
     
     random_sample = np.random.random(N)
     rands_input = (rands - rands.astype(np.int32)>random_sample) + rands.astype(np.int32)
@@ -665,16 +687,16 @@ print "Simulation finished"
 print ""
 print "Saving fields"
 # save fields
-np.savetxt("./2020_03_29/tab_days_{:03d}.txt".format(run),tab_days,fmt='%8d')
-np.savetxt("./2020_03_29/tab_active_{:03d}.txt".format(run),tab_active,fmt='%8d')
-np.savetxt("./2020_03_29/tab_infectious_{:03d}.txt".format(run),tab_infectious,fmt='%8d')
-np.savetxt("./2020_03_29/tab_incubation_{:03d}.txt".format(run),tab_incubation,fmt='%8d')
-np.savetxt("./2020_03_29/tab_symptoms_{:03d}.txt".format(run),tab_symptoms,fmt='%8d')
-np.savetxt("./2020_03_29/tab_hospitalized_{:03d}.txt".format(run),tab_hospitalized,fmt='%8d')
-np.savetxt("./2020_03_29/tab_icu_{:03d}.txt".format(run), tab_icu,fmt='%8d')
-np.savetxt("./2020_03_29/tab_dead_{:03d}.txt".format(run), tab_dead,fmt='%8d')
-np.savetxt("./2020_03_29/tab_immune_{:03d}.txt".format(run), tab_immune,fmt='%8d')
-np.savetxt("./2020_03_29/tab_susceptible_{:03d}.txt".format(run), tab_susceptible,fmt='%8d')
+np.savetxt("./2020_04_03/tab_days_{:03d}.txt".format(run),tab_days,fmt='%8d')
+np.savetxt("./2020_04_03/tab_active_{:03d}.txt".format(run),tab_active,fmt='%8d')
+np.savetxt("./2020_04_03/tab_infectious_{:03d}.txt".format(run),tab_infectious,fmt='%8d')
+np.savetxt("./2020_04_03/tab_incubation_{:03d}.txt".format(run),tab_incubation,fmt='%8d')
+np.savetxt("./2020_04_03/tab_symptoms_{:03d}.txt".format(run),tab_symptoms,fmt='%8d')
+np.savetxt("./2020_04_03/tab_hospitalized_{:03d}.txt".format(run),tab_hospitalized,fmt='%8d')
+np.savetxt("./2020_04_03/tab_icu_{:03d}.txt".format(run), tab_icu,fmt='%8d')
+np.savetxt("./2020_04_03/tab_dead_{:03d}.txt".format(run), tab_dead,fmt='%8d')
+np.savetxt("./2020_04_03/tab_immune_{:03d}.txt".format(run), tab_immune,fmt='%8d')
+np.savetxt("./2020_04_03/tab_susceptible_{:03d}.txt".format(run), tab_susceptible,fmt='%8d')
 
 # np.savetxt("./save/day_infected_{:03d}.txt".format(run),day_infected) 
 # np.savetxt("./save/rands_input_{:03d}.txt".format(run),rands)  

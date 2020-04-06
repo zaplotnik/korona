@@ -280,6 +280,28 @@ hospitalization_period_severe[hosp_p_severe] = stats.lognorm.rvs(ihln1, ihln2, i
 status_hospitalized_severe[hosp_p_severe] = 1 
 
 
+# now remove people from home recovery
+inc_home = np.where(home_recovery_period < 0.5)[0]
+status_home[inc_home] = 0
+status_active[inc_home] = 0
+
+# now remove living/deceased from hospitals
+inc_hosp_dead = np.where(hospitalization_period_dead < 0.5)[0]
+status_hospitalized_dead[inc_hosp_dead] = 0
+status_dead[inc_hosp_dead] = 1
+status_active[inc_hosp_dead] = 0
+    
+inc_hosp_critical = np.where(hospitalization_period_critical < 0.5)[0]
+status_hospitalized_critical[inc_hosp_critical] = 0
+status_immune[inc_hosp_critical] = 1
+status_active[inc_hosp_critical] = 0
+    
+inc_hosp_severe = np.where(hospitalization_period_severe < 0.5)[0]
+status_hospitalized_severe[inc_hosp_severe] = 0 
+status_immune[inc_hosp_severe] = 1
+status_active[inc_hosp_severe] = 0
+
+
 Nactive   = np.sum(status_active)
 Nincubation =  np.sum(status_incubation)
 Ninfectious = np.sum(status_infectious)

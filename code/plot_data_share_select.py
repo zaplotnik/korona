@@ -12,9 +12,9 @@ import pandas as pd
 import os
 import datetime
 
-run = 17
+run = 19
 
-save_data = False
+save_data = True
 #%% READ REAL DATA
 # https://github.com/slo-covid-19/data/blob/master/csv/stats.csv
 data_stats = pd.read_csv(r"https://raw.githubusercontent.com/slo-covid-19/data/master/csv/stats.csv",\
@@ -79,9 +79,9 @@ for i in range(N):
         #print icu[j,:Ndata][inc_icu_all]
         #print (data_icu.values)[inc_icu_all]      
 
-        sum1 = ((np.log((data_dead.values)[inc_dead_all]) - np.log(dead[j,:Ndata][inc_dead_all]))**2).sum()
-        sum2 = (((np.log(data_icu.values)[inc_icu_all]) - np.log(icu[j,:Ndata][inc_icu_all]))**2).sum()       
-        #print sum1, sum2
+        sum1 = (np.abs(np.log((data_dead.values)[inc_dead_all]) - np.log(dead[j,:Ndata][inc_dead_all]))).sum()
+        sum2 = (np.abs((np.log(data_icu.values)[inc_icu_all]) - np.log(icu[j,:Ndata][inc_icu_all]))).sum()       
+        print sum1, sum2
         #print ""
         blah[0,j] = i
         blah[1,j] = sum1 + sum2 
@@ -89,82 +89,84 @@ for i in range(N):
     else:
         continue
 
-print blah[1,:j]
-print np.percentile(blah[1,:j],15)
-
-
+print j
+a =  np.percentile(blah[1,:j],5)
+print a
+inds = blah[0,:j][blah[1,:j] < a]
+inds = inds.astype(np.int)
+print inds
 
 
 #%% COMPUTE PARAMETERS
-active_median = np.median(active[:j],axis=0)
-active_01 = np.percentile(active[:j],1,axis=0)
-active_05 = np.percentile(active[:j],5,axis=0)
-active_10 = np.percentile(active[:j],10,axis=0)
-active_25 = np.percentile(active[:j],25,axis=0)
-active_75 = np.percentile(active[:j],75,axis=0)
-active_90 = np.percentile(active[:j],90,axis=0)
-active_95 = np.percentile(active[:j],95,axis=0)
-active_99 = np.percentile(active[:j],99,axis=0)
+active_median = np.median(active[inds],axis=0)
+active_01 = np.percentile(active[inds],1,axis=0)
+active_05 = np.percentile(active[inds],5,axis=0)
+active_10 = np.percentile(active[inds],10,axis=0)
+active_25 = np.percentile(active[inds],25,axis=0)
+active_75 = np.percentile(active[inds],75,axis=0)
+active_90 = np.percentile(active[inds],90,axis=0)
+active_95 = np.percentile(active[inds],95,axis=0)
+active_99 = np.percentile(active[inds],99,axis=0)
 
-infectious_median = np.median(infectious[:j],axis=0)
-infectious_01 = np.percentile(infectious[:j],1,axis=0)
-infectious_05 = np.percentile(infectious[:j],5,axis=0)
-infectious_10 = np.percentile(infectious[:j],10,axis=0)
-infectious_25 = np.percentile(infectious[:j],25,axis=0)
-infectious_75 = np.percentile(infectious[:j],75,axis=0)
-infectious_90 = np.percentile(infectious[:j],90,axis=0)
-infectious_95 = np.percentile(infectious[:j],95,axis=0)
-infectious_99 = np.percentile(infectious[:j],99,axis=0)
+infectious_median = np.median(infectious[inds],axis=0)
+infectious_01 = np.percentile(infectious[inds],1,axis=0)
+infectious_05 = np.percentile(infectious[inds],5,axis=0)
+infectious_10 = np.percentile(infectious[inds],10,axis=0)
+infectious_25 = np.percentile(infectious[inds],25,axis=0)
+infectious_75 = np.percentile(infectious[inds],75,axis=0)
+infectious_90 = np.percentile(infectious[inds],90,axis=0)
+infectious_95 = np.percentile(infectious[inds],95,axis=0)
+infectious_99 = np.percentile(infectious[inds],99,axis=0)
 
-symptoms_median = np.median(symptoms[:j],axis=0)
-symptoms_01 = np.percentile(symptoms[:j],1,axis=0)
-symptoms_05 = np.percentile(symptoms[:j],5,axis=0)
-symptoms_10 = np.percentile(symptoms[:j],10,axis=0)
-symptoms_25 = np.percentile(symptoms[:j],25,axis=0)
-symptoms_75 = np.percentile(symptoms[:j],75,axis=0)
-symptoms_90 = np.percentile(symptoms[:j],90,axis=0)
-symptoms_95 = np.percentile(symptoms[:j],95,axis=0)
-symptoms_99 = np.percentile(symptoms[:j],99,axis=0)
+symptoms_median = np.median(symptoms[inds],axis=0)
+symptoms_01 = np.percentile(symptoms[inds],1,axis=0)
+symptoms_05 = np.percentile(symptoms[inds],5,axis=0)
+symptoms_10 = np.percentile(symptoms[inds],10,axis=0)
+symptoms_25 = np.percentile(symptoms[inds],25,axis=0)
+symptoms_75 = np.percentile(symptoms[inds],75,axis=0)
+symptoms_90 = np.percentile(symptoms[inds],90,axis=0)
+symptoms_95 = np.percentile(symptoms[inds],95,axis=0)
+symptoms_99 = np.percentile(symptoms[inds],99,axis=0)
 
-hospitalized_median = np.median(hospitalized[:j],axis=0)
-hospitalized_01 = np.percentile(hospitalized[:j],1,axis=0)
-hospitalized_05 = np.percentile(hospitalized[:j],5,axis=0)
-hospitalized_10 = np.percentile(hospitalized[:j],10,axis=0)
-hospitalized_25 = np.percentile(hospitalized[:j],25,axis=0)
-hospitalized_75 = np.percentile(hospitalized[:j],75,axis=0)
-hospitalized_90 = np.percentile(hospitalized[:j],90,axis=0)
-hospitalized_95 = np.percentile(hospitalized[:j],95,axis=0)
-hospitalized_99 = np.percentile(hospitalized[:j],99,axis=0)
+hospitalized_median = np.median(hospitalized[inds],axis=0)
+hospitalized_01 = np.percentile(hospitalized[inds],1,axis=0)
+hospitalized_05 = np.percentile(hospitalized[inds],5,axis=0)
+hospitalized_10 = np.percentile(hospitalized[inds],10,axis=0)
+hospitalized_25 = np.percentile(hospitalized[inds],25,axis=0)
+hospitalized_75 = np.percentile(hospitalized[inds],75,axis=0)
+hospitalized_90 = np.percentile(hospitalized[inds],90,axis=0)
+hospitalized_95 = np.percentile(hospitalized[inds],95,axis=0)
+hospitalized_99 = np.percentile(hospitalized[inds],99,axis=0)
 
-icu_median = np.median(icu[:j],axis=0)
-icu_01 = np.percentile(icu[:j],1,axis=0)
-icu_05 = np.percentile(icu[:j],5,axis=0)
-icu_10 = np.percentile(icu[:j],10,axis=0)
-icu_25 = np.percentile(icu[:j],25,axis=0)
-icu_75 = np.percentile(icu[:j],75,axis=0)
-icu_90 = np.percentile(icu[:j],90,axis=0)
-icu_95 = np.percentile(icu[:j],95,axis=0)
-icu_99 = np.percentile(icu[:j],99,axis=0)
+icu_median = np.median(icu[inds],axis=0)
+icu_01 = np.percentile(icu[inds],1,axis=0)
+icu_05 = np.percentile(icu[inds],5,axis=0)
+icu_10 = np.percentile(icu[inds],10,axis=0)
+icu_25 = np.percentile(icu[inds],25,axis=0)
+icu_75 = np.percentile(icu[inds],75,axis=0)
+icu_90 = np.percentile(icu[inds],90,axis=0)
+icu_95 = np.percentile(icu[inds],95,axis=0)
+icu_99 = np.percentile(icu[inds],99,axis=0)
 
-dead_median = np.median(dead[:j],axis=0)
-dead_01 = np.percentile(dead[:j],1,axis=0)
-dead_05 = np.percentile(dead[:j],5,axis=0)
-dead_10 = np.percentile(dead[:j],10,axis=0)
-dead_25 = np.percentile(dead[:j],25,axis=0)
-dead_75 = np.percentile(dead[:j],75,axis=0)
-dead_90 = np.percentile(dead[:j],90,axis=0)
-dead_95 = np.percentile(dead[:j],95,axis=0)
-dead_99 = np.percentile(dead[:j],99,axis=0)
+dead_median = np.median(dead[inds],axis=0)
+dead_01 = np.percentile(dead[inds],1,axis=0)
+dead_05 = np.percentile(dead[inds],5,axis=0)
+dead_10 = np.percentile(dead[inds],10,axis=0)
+dead_25 = np.percentile(dead[inds],25,axis=0)
+dead_75 = np.percentile(dead[inds],75,axis=0)
+dead_90 = np.percentile(dead[inds],90,axis=0)
+dead_95 = np.percentile(dead[inds],95,axis=0)
+dead_99 = np.percentile(dead[inds],99,axis=0)
 
-immune_median = np.median(immune[:j],axis=0)
-immune_01 = np.percentile(immune[:j],1,axis=0)
-immune_05 = np.percentile(immune[:j],5,axis=0)
-immune_10 = np.percentile(immune[:j],10,axis=0)
-immune_25 = np.percentile(immune[:j],25,axis=0)
-immune_75 = np.percentile(immune[:j],75,axis=0)
-immune_90 = np.percentile(immune[:j],90,axis=0)
-immune_95 = np.percentile(immune[:j],95,axis=0)
-immune_99 = np.percentile(immune[:j],99,axis=0)
+immune_median = np.median(immune[inds],axis=0)
+immune_01 = np.percentile(immune[inds],1,axis=0)
+immune_05 = np.percentile(immune[inds],5,axis=0)
+immune_10 = np.percentile(immune[inds],10,axis=0)
+immune_25 = np.percentile(immune[inds],25,axis=0)
+immune_75 = np.percentile(immune[inds],75,axis=0)
+immune_90 = np.percentile(immune[inds],90,axis=0)
+immune_95 = np.percentile(immune[inds],95,axis=0)
+immune_99 = np.percentile(immune[inds],99,axis=0)
 
 if save_data: 
 	np.savetxt("./data/active_median.txt",active_median)
@@ -222,6 +224,50 @@ if save_data:
 	np.savetxt("./data/immune_75.txt",immune_75)
 	np.savetxt("./data/immune_90.txt",immune_90)
 	np.savetxt("./data/immune_95.txt",immune_95)
+    
+	dates = [(datetime.datetime(2020,3,12) + datetime.timedelta(days=i)).strftime("%Y-%m-%d") for i in range(0,Nt)]
+    
+	raw_data = {
+        'date' : dates,
+        'active_median': active_median, 
+        'active_05': active_05,
+        'active_25': active_25, 
+        'active_75': active_75,
+        'active_95': active_95,
+        'infectious_median': infectious_median, 
+        'infectious_05': infectious_05,
+        'infectious_25': infectious_25, 
+        'infectious_75': infectious_75,
+        'infectious_95': infectious_95, 
+        'symptoms_median': symptoms_median, 
+        'symptoms_05': symptoms_05,
+        'symptoms_25': symptoms_25, 
+        'symptoms_75': symptoms_75,
+        'symptoms_95': symptoms_95, 
+        'hospitalized_median': hospitalized_median, 
+        'hospitalized_05': hospitalized_05,
+        'hospitalized_25': hospitalized_25, 
+        'hospitalized_75': hospitalized_75,
+        'hospitalized_95': hospitalized_95, 
+        'icu_median': icu_median, 
+        'icu_05': icu_05,
+        'icu_25': icu_25, 
+        'icu_75': icu_75,
+        'icu_95': icu_95, 
+        'dead_median': dead_median, 
+        'dead_05': dead_05,
+        'dead_25': dead_25, 
+        'dead_75': dead_75,
+        'dead_95': dead_95,
+        'immune_median': immune_median, 
+        'immune_05': immune_05,
+        'immune_25': immune_25, 
+        'immune_75': immune_75,
+        'immune_95': immune_95
+        }
+	df = pd.DataFrame(raw_data, columns = list(raw_data.keys()))
+	df.to_csv('slo_pandemic_2020_04_03.csv')
+
 
 #%% PLOT FIELDS
 fig = plt.figure(figsize=(12,6))
@@ -236,6 +282,9 @@ plt.plot(days,active_median,label="Active",color="blue",lw=3)
 # plt.fill_between(days,symptoms_01,symptoms_99,color="green",alpha=0.1)
 plt.fill_between(days,symptoms_25,symptoms_75,color="green",alpha=0.2)
 plt.plot(days,symptoms_median,label="Symptomatic (cumulative)",color="green",lw=3)
+
+plt.fill_between(days,infectious_25,infectious_75,color="green",alpha=0.2)
+plt.plot(days,infectious_median,label="Infectious",color="cyan",lw=3)
 
 # plt.fill_between(days,symptoms_01,symptoms_99,color="green",alpha=0.1)
 plt.fill_between(days,hospitalized_25,hospitalized_75,color="orange",alpha=0.2)
@@ -276,7 +325,7 @@ plt.ylabel("Number of nodes")
 plt.grid(b=True, which='major', color='grey', linestyle='-')
 plt.grid(b=True, which='minor', color='grey', linestyle='--')
 plt.ylim([1,10**5])
-plt.xlim([-3,Nt+3])
+plt.xlim([-1,Nt])
 plt.legend()
 fig.savefig("potek_pandemije{:02d}.png".format(run),dpi=250)
     

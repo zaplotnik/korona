@@ -18,21 +18,21 @@ def replace_line(file_name, line_num, text):
     out.writelines(lines)
     out.close()
 
-nodes=[14]
+nodes=[8,11,12,14,15]
 j = 0
 node = nodes[j]
 replace_line("run_job.sh",1,"#SBATCH --nodelist=node{:02d}\n".format(node))
 
 max_pnode = 32
 
-for k in range(0,32):
-    node = nodes[k//max_pnode]
+for k in range(0,1000):
+    node = nodes[(k//max_pnode)%(len(nodes))]
     print(k,node)
 
     replace_line("run_job.sh",1,"#SBATCH --nodelist=node{:02d}\n".format(node))
     
     print k,k+1    
-    replace_line("run_job.sh", 17, "python run_korona.py {0} {1}".format(k,k+1))
+    replace_line("run_job.sh", 17, "python run_korona.py {0} {1}".format(2*k,2*k+2))
     
     subprocess.call("sbatch run_job.sh", shell=True)
-    time.sleep(1)
+    #time.sleep(1)
