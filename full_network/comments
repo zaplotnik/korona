@@ -1,0 +1,18 @@
+Changes
+=======
+
+korona_full_network.py
+----------------------
+
++gender
++age
++age_groups
+-R0 = stats.lognorm.rvs(0.35535982, 1.14371067, 1.53628849) [unnecessary]
+-dr_cr = dr/(dr+cr)    [unnecessary]
+-remove 1 day from incubation period, infectious_period start/end [removed condition]
+-check illness development [modified condition: (-0.5 < .. < 0.5) to (.. < 0.5)]
++infect_connected_nodes # go through all his susceptible connections [nested for loop removed]
+-parameters moved to covid19_parameters.py
+-print "Infectious period: ", [removed/commented]
+
+

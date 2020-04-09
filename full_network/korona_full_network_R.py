@@ -26,6 +26,7 @@ import datetime
 import matplotlib.pyplot as plt
 
 import ages_module
+import covid19_parameters2
 import generate_connections2    # compiled Fortran 90 code for Python2 (.so file)
 
 class Covid19():
@@ -66,9 +67,9 @@ class Covid19():
         self.property_gender = np.zeros(N, dtype=np.bool)       # 0=female, 1=male
         self.property_age = np.zeros(N, dtype=np.int)
         self.property_age_group = np.zeros(N, dtype=np.int)
-        self.age_groups = [(0,33),(33,66),(66,100)]
+        # self.age_groups = [(0,30),(30,60),(60,ages_module.max_age)]
+        self.age_groups = [(10*i+0,10*i+9 +1) for i in range(8)]+[(80, ages_module.max_age)]
         self.number_of_age_groups = len(self.age_groups)
-
         self.period_incubation = np.zeros(N, dtype=np.float16) + 20000.
         self.period_infectious_start = np.zeros(N, dtype=np.float16) + 20000.
         self.period_infectious_end = np.zeros(N, dtype=np.float16) + 20000.
@@ -81,47 +82,20 @@ class Covid19():
         self.init_other_stats()
 
     def set_transmission_clinical_parameters(self):
-        self.doubling_time = np.random.normal(3.5, 0.5)
-        self.R0 = stats.lognorm.rvs(0.35535982, 1.14371067, 1.53628849)
+        # self.R0 = stats.lognorm.rvs(0.35535982, 1.14371067, 1.53628849)
+        parameters = covid19_parameters2.read_parameters()
 
-        # Distribution parameters by age groups
-        self.param_infectious_start = np.array([np.random.normal(3.,0.5), np.random.normal(3.,0.5), np.random.normal(3.,0.5)])      # after infection
-        self.param_infectious_end = np.array([np.random.normal(2.5,0.5), np.random.normal(2.5,0.5), np.random.normal(2.5,0.5)])     # after illness onset
+        self.doubling_time = parameters[0]
+        self.param_infectious_start, self.param_infectious_end = parameters[1], parameters[2]
+        self.ratio_asympt = parameters[3]
+        self.ratio_hosp, self.ratio_severe, self.ratio_critic, self.ratio_deceas = parameters[4], parameters[5], parameters[6], parameters[7]
+        self.ratio_critic_to_deceas = parameters[8]
+        self.ratio_severe_to_deceas_wc, self.ratio_critic_to_deceas_wc = parameters[9], parameters[10]
+        self.distparams_incubation, self.distparams_onset2hosp, self.distparams_home2recov = parameters[11], parameters[12], parameters[13]
+        self.distparams_hosp2recov_s, self.distparams_hosp2recov_c, self.distparams_hosp2decea = parameters[14], parameters[15], parameters[16]
+        self.sar_family, self.sar_others = parameters[17], parameters[18]
+        self.sar_family_daily, self.sar_others_daily = parameters[19], parameters[20]
 
-        temp_param_hosp = stats.lognorm.rvs(0.57615709, 2.17310146, 4.19689622) / 100.
-        temp_param_deceas = stats.lognorm.rvs(0.44779353, 0.15813357) / 100.
-        temp_param_critic = 0.88679 * temp_param_deceas
-        temp_param_severe = temp_param_hosp - temp_param_deceas - temp_param_critic
-        self.ratio_hosp = [temp_param_hosp, temp_param_hosp, temp_param_hosp]
-        self.ratio_deceas = [temp_param_deceas, temp_param_deceas, temp_param_deceas]
-        self.ratio_critic = [temp_param_critic, temp_param_critic, temp_param_critic]
-        self.ratio_severe = [temp_param_severe, temp_param_severe, temp_param_severe]
-
-        self.ratio_critical_to_deceased = [d/(c+d) for c, d in izip(self.ratio_critic, self.ratio_deceas)]
-        self.ratio_severe_to_deceased_wc = [np.random.normal(0.1,0.05), np.random.normal(0.1,0.05), np.random.normal(0.1,0.05)]      # wc=without (appropriate medical) care
-        self.ratio_critic_to_deceased_wc = [np.random.normal(0.9,0.05), np.random.normal(0.9,0.05), np.random.normal(0.9,0.05)]      # wc=without (appropriate medical) care
-
-        temp_param_s = stats.lognorm.rvs(0.42142559, 9.00007222, 1.99992887)        # temp_param=temporary parameter
-        temp_param_c = stats.lognorm.rvs(0.42140269, 8.99999444, 4.00000571)
-        self.distparams_incubation = [(0.54351624, -0.09672665, 4.396788397), (0.54351624, -0.09672665, 4.396788397), (0.54351624, -0.09672665, 4.396788397)]   # incubation period
-        self.distparams_onset2hosp = [(1.39916754,  0.05548228, 1.444545973), (1.39916754,  0.05548228, 1.444545973), (1.39916754,  0.05548228, 1.444545973)]   # illness onset -> hospitalisation
-        self.distparams_home2recov = [(0.60720317,  0.00000000, 6.000000000), (0.60720317,  0.00000000, 6.000000000), (0.60720317,  0.00000000, 6.000000000)]   # home -> recovery
-        self.distparams_hosp2recov_s=[(0.60720317,  0.00000000,temp_param_s), (0.60720317,  0.00000000,temp_param_s), (0.60720317,  0.00000000,temp_param_s)]   # hospital admission (severe) -> leave
-        self.distparams_hosp2recov_c=[(0.60720317,  0.00000000,temp_param_c), (0.60720317,  0.00000000,temp_param_c), (0.60720317,  0.00000000,temp_param_c)]   # hospital admission (critical) -> leave
-        self.distparams_hosp2decea = [(0.71678881,  0.21484379, 6.485309000), (0.71678881,  0.21484379, 6.485309000), (0.71678881,  0.21484379, 6.485309000)]   # hospital admission -> decease
-
-        temp_param_mean_incubation_period = [stats.lognorm.mean(*params) for params in self.distparams_incubation]
-        temp_param_infectious_period = [m-s+e for m, s, e in izip(temp_param_mean_incubation_period, self.param_infectious_start, self.param_infectious_end)]
-
-        temp_param_sar_family = np.random.normal(0.35, 0.0425)
-        temp_param_sar_others = stats.lognorm.rvs(0.3460311057053344, 0.04198595886371728, 0.11765118249339841)
-        self.sar_family = np.array([temp_param_sar_family, temp_param_sar_family, temp_param_sar_family])
-        self.sar_others = np.array([temp_param_sar_others, temp_param_sar_others, temp_param_sar_others])
-        self.sar_family_daily = np.array([1. - np.exp(np.log(1-sar)/period) for sar, period in izip(self.sar_family, temp_param_infectious_period)])
-        self.sar_others_daily = np.array([1. - np.exp(np.log(1-sar)/period) for sar, period in izip(self.sar_others, temp_param_infectious_period)])
-
-        temp_param_asympt = np.random.normal(0.4, 0.10)
-        self.ratio_asympt = [temp_param_asympt, temp_param_asympt, temp_param_asympt]
         factors = [2.**(stats.lognorm.mean(*params)/self.doubling_time) / (1. - ratio) for params, ratio in izip(self.distparams_incubation, self.ratio_asympt)]
         self.N_init = int(self.N_init * sum(factors)/len(factors))
 
@@ -132,7 +106,7 @@ class Covid19():
 
         print "TRANSMISSION DYNAMICS PARAMETERS"
 
-        print "Basic reproduction number R0: ", self.R0
+        # print "Basic reproduction number R0: ", self.R0
         print "Doubling time in the initial uncontrolled phase: ", self.doubling_time
         print "Multiplication factor for initial number of infected: ", factors
         print "Secondary attack rate - household contacts: ", self.sar_family
@@ -142,7 +116,7 @@ class Covid19():
         print "Mean/median/std incubation period: ", [(stats.lognorm.mean(*params), stats.lognorm.median(*params), stats.lognorm.std(*params))
                                                       for params in self.distparams_incubation]
 
-        print "Infectious period: ", temp_param_infectious_period
+        # print "Infectious period: ", temp_param_infectious_period
 
         print ""
         print "CLINICAL PARAMETERS"
@@ -152,9 +126,9 @@ class Covid19():
         print "Critical ratio without fatal: ", self.ratio_critic, " and with fatal: ", [c+d for c, d in izip(self.ratio_critic, self.ratio_deceas)]
         print "Severe ratio: ", self.ratio_severe
 
-        print "Fatality ratio of critically ill: ", self.ratio_critical_to_deceased
-        print "Fatality ratio of critically ill without intensive care: ", self.ratio_critic_to_deceased_wc
-        print "Fatality ratio of severely ill without hospitalisation: ", self.ratio_severe_to_deceased_wc
+        # print "Fatality ratio of critically ill: ", self.ratio_critic_to_deceas
+        print "Fatality ratio of critically ill without intensive care: ", self.ratio_critic_to_deceas_wc
+        print "Fatality ratio of severely ill without hospitalisation: ", self.ratio_severe_to_deceas_wc
 
         print "Mean/median/std illness onset to hospitalisation: ", [(stats.lognorm.mean(*params), stats.lognorm.median(*params), stats.lognorm.std(*params))
                                                                      for params in self.distparams_onset2hosp]
@@ -381,7 +355,7 @@ class Covid19():
     def check_illness_development(self):
         print "check illness development"
         # where incubation period < 0.5 --> illness onset
-        identify_incubation = np.where((-0.5 < self.period_incubation) & (self.period_incubation < 0.5))[0]
+        identify_incubation = np.where((-0.5 <= self.period_incubation) & (self.period_incubation < 0.5))[0]
         self.identify_incubation = identify_incubation
         self.status_incubation[identify_incubation] = 0
         self.status_onset[identify_incubation] = 1
@@ -392,28 +366,28 @@ class Covid19():
             self.connection_family_max[self.identify_isolated] = 0
 
         # where infectiousness period start < 0.5 --> status = infectious
-        identify_infectious_start = np.where((-0.5 <= self.period_infectious_start) & (self.period_infectious_start < 0.5))[0]
+        identify_infectious_start = np.where(self.period_infectious_start < 0.5)[0]
         self.status_infectious[identify_infectious_start] = 1
 
         # where infectiousness period end < 0.5 --> status=immune/recovered, no longer infectious
-        identify_infectious_end = np.where((-0.5 <= self.period_infectious_end) & (self.period_infectious_end < 0.5))[0]
+        identify_infectious_end = np.where(self.period_infectious_end < 0.5)[0]
         self.status_infectious[identify_infectious_end] = 0
         self.status_till_eof[identify_infectious_end] = 0
         self.status_immune[identify_infectious_end] = 1
 
         # when onset < 0.5 --> status = hospitalised, no longer onset
-        identify_onset = np.where((-0.5 <= self.period_onset) & (self.period_onset < 0.5))[0]
+        identify_onset = np.where(self.period_onset < 0.5)[0]
         self.separate_home_hosp(identify_onset)
 
         # now remove people from home recovery
-        identify_home = np.where((-0.5 <= self.period_home_recovery) & (self.period_home_recovery < 0.5))[0]
+        identify_home = np.where(self.period_home_recovery < 0.5)[0]
         self.status_home[identify_home] = 0
         self.status_active[identify_home] = 0
 
         # now remove living/deceased from hospitals
-        identify_hosp_deceas = np.where((-0.5 <= self.period_hosp_deceased) & (self.period_hosp_deceased < 0.5))[0]
-        identify_hosp_critic = np.where((-0.5 <= self.period_hosp_critical) & (self.period_hosp_critical < 0.5))[0]
-        identify_hosp_severe = np.where((-0.5 <= self.period_hosp_severe) & (self.period_hosp_severe < 0.5))[0]
+        identify_hosp_deceas = np.where(self.period_hosp_deceased < 0.5)[0]
+        identify_hosp_critic = np.where(self.period_hosp_critical < 0.5)[0]
+        identify_hosp_severe = np.where(self.period_hosp_severe < 0.5)[0]
         self.status_hosp_deceas[identify_hosp_deceas] = 0
         self.status_hosp_critic[identify_hosp_critic] = 0
         self.status_hosp_severe[identify_hosp_severe] = 0
