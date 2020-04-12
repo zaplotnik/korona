@@ -3,7 +3,6 @@ Changes
 
 korona_full_network.py
 ----------------------
-
 +gender
 +age
 +age_groups
@@ -14,5 +13,17 @@ korona_full_network.py
 +infect_connected_nodes # go through all his susceptible connections [nested for loop removed]
 -parameters moved to covid19_parameters.py
 -print "Infectious period: ", [removed/commented]
++exponential scale factor = doubling_time/ln(2) [factor 4.9 replaced]
++identify_isolated [changed]
+
+covid19_parameters.py
+---------------------
++asymptomatic in 2 age groups
 
 
+resources:
+    asymptomatic:
+        https://www.cebm.net/covid-19/covid-19-what-proportion-are-asymptomatic/
+            50% | Iceland
+        https://www.eurosurveillance.org/content/10.2807/1560-7917.ES.2020.25.10.2000180 (Diamond Princess)
+            35% (median; CI 20.6%-39.9%) | age: 58,69 (avg,median; 33% 70+, 62-73 interquartile 50%)

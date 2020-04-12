@@ -8,7 +8,8 @@ def read_parameters():
     temp_param_infectious_end = np.random.normal(2.5, 0.5)
     temp_param_s = stats.lognorm.rvs(0.42142559, 9.00007222, 1.99992887)
     temp_param_c = stats.lognorm.rvs(0.42140269, 8.99999444, 4.00000571)
-    temp_param_asympt = np.random.normal(0.40, 0.10)
+    temp_param_asympt1 = np.random.normal(0.5, 0.1)
+    temp_param_asympt2 = np.random.normal(0.3, 0.1)
 
     doubling_time = np.random.normal(3.5, 0.5)                                  # for whole population
     # R0 = stats.lognorm.rvs(0.35535982, 1.14371067, 1.53628849)                # this parameter is never used (why do we need it?)
@@ -33,15 +34,15 @@ def read_parameters():
                                      temp_param_infectious_end,
                                      temp_param_infectious_end])
 
-    ratio_asympt = [temp_param_asympt,                                          # ratio_asympt = asymptomatic / all_infected(i.e. known+unknown)
-                    temp_param_asympt,
-                    temp_param_asympt,
-                    temp_param_asympt,
-                    temp_param_asympt,
-                    temp_param_asympt,
-                    temp_param_asympt,
-                    temp_param_asympt,
-                    temp_param_asympt]
+    ratio_asympt = [temp_param_asympt1,                                         # ratio_asympt = asymptomatic / all_infected(i.e. known+unknown)
+                    temp_param_asympt1,
+                    temp_param_asympt1,
+                    temp_param_asympt1,
+                    temp_param_asympt1,
+                    temp_param_asympt2,
+                    temp_param_asympt2,
+                    temp_param_asympt2,
+                    temp_param_asympt2]
     ratio_severe = [stats.norm.rvs(16.09999999, 1.67365310) /1000000,           # ratio_severe = severe / all_infected(i.e. known+unknown)
                     stats.norm.rvs(4.079997660, 0.84185997) /10000,
                     stats.norm.rvs(10.39999943, 2.13262174) /1000,

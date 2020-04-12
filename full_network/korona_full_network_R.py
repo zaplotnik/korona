@@ -31,7 +31,7 @@ import generate_connections2    # compiled Fortran 90 code for Python2 (.so file
 
 class Covid19():
     def __init__(self, N, N_init):
-        self.population = N
+        self.N = N                                              # total population
         self.N_init = N_init
 
         self.status_susceptible = np.ones(N, dtype=np.bool)
@@ -61,15 +61,18 @@ class Covid19():
         self.N_immune = 0           # immune & recovered
         self.N_symptoms = 0         # (active-incubation)*(1-ratio_asymptomatic)
 
-        self.probability_female = 0.5
+        self.probability_female = 0.512
         self.probability_male = 1.-self.probability_female
 
         self.property_gender = np.zeros(N, dtype=np.bool)       # 0=female, 1=male
         self.property_age = np.zeros(N, dtype=np.int)
-        self.property_age_group = np.zeros(N, dtype=np.int)
-        # self.age_groups = [(0,30),(30,60),(60,ages_module.max_age)]
-        self.age_groups = [(10*i+0,10*i+9 +1) for i in range(8)]+[(80, ages_module.max_age)]
-        self.number_of_age_groups = len(self.age_groups)
+        self.property_age_group1 = np.zeros(N, dtype=np.int)
+        self.property_age_group2 = np.zeros(N, dtype=np.int)
+        # self.age_groups0 = [(0,30),(30,60),(60,ages_module.max_age)]
+        self.age_groups1 = [(10*i+0,10*i+9 +1) for i in range(8)]+[(80, ages_module.max_age)]   # grouped by clinical ratios data
+        self.age_groups2 = [( 5*i+0, 5*i+4 +1) for i in range(14)]+[(70, ages_module.max_age)]  # grouped by contact matrix data
+        self.number_of_age_groups1 = len(self.age_groups1)
+        self.number_of_age_groups2 = len(self.age_groups2)
         self.period_incubation = np.zeros(N, dtype=np.float16) + 20000.
         self.period_infectious_start = np.zeros(N, dtype=np.float16) + 20000.
         self.period_infectious_end = np.zeros(N, dtype=np.float16) + 20000.
@@ -97,7 +100,7 @@ class Covid19():
         self.sar_family_daily, self.sar_others_daily = parameters[19], parameters[20]
 
         factors = [2.**(stats.lognorm.mean(*params)/self.doubling_time) / (1. - ratio) for params, ratio in izip(self.distparams_incubation, self.ratio_asympt)]
-        self.N_init = int(self.N_init * sum(factors)/len(factors))
+        self.N_init = int(self.N_init * sum(factors)/len(factors))      # rescaling: N_init(cumulative infected up to that day) = N_init(cumulative postively tested up to that day) * factor
 
         print "INITIAL CONDITIONS (model data)"
         print "Number of positively tested as of March 12: ", self.N_init
@@ -147,32 +150,49 @@ class Covid19():
         self.isolate_from_family = False
         self.day_isolate = 20000.
 
-        random_people = np.random.choice(self.population, self.N_init, replace=True)
-        N_init_female = int(self.probability_female*self.N_init)
-        N_init_male = self.N_init-N_init_female
-        random_female = random_people[:N_init_female],
-        random_male = random_people[N_init_female:]
+        ### select gender and age for whole population
+        N_female = int(self.probability_female*self.N)
+        N_male = self.N-N_female
+        self.property_gender[:N_female] = 0     # female
+        self.property_gender[N_female:] = 1     # male
+        self.property_age[:N_female] = ages_module.random_ages(ages_module.female_age_demograpy_distribution,
+                                                               0, ages_module.max_age, N_female)
+        self.property_age[N_female:] = ages_module.random_ages(ages_module.male_age_demograpy_distribution,
+                                                               0, ages_module.max_age, N_male)
+        self.property_age_group1 = np.array([ages_module.assign_agegroup(age, self.age_groups1) for age in self.property_age])
+        self.property_age_group2 = np.array([ages_module.assign_agegroup(age, self.age_groups2) for age in self.property_age])
+        ###
 
-        self.property_gender[random_male] = 1
-        self.property_age[random_female] = ages_module.random_ages(ages_module.female_age_demograpy_distribution,
-                                                                   0, ages_module.max_age, N_init_female)
-        self.property_age[random_male] = ages_module.random_ages(ages_module.male_age_demograpy_distribution,
-                                                                 0, ages_module.max_age, N_init_male)
-        self.property_age_group[random_people] = np.array([ages_module.assign_agegroup(age, self.age_groups) for age in self.property_age[random_people]])
+        random_people = np.random.choice(self.N, self.N_init, replace=True)
 
-        time_infected = np.random.exponential(4.9, self.N_init)
-        self.status_active[random_people] = 1
+        ### select gender and age when infected
+        # N_init_female = int(self.probability_female*self.N_init)
+        # N_init_male = self.N_init-N_init_female
+        # random_female = random_people[:N_init_female],
+        # random_male = random_people[N_init_female:]
+        # self.property_gender[random_female] = 0
+        # self.property_gender[random_male] = 1
+        # self.property_age[random_female] = ages_module.random_ages(ages_module.female_age_demograpy_distribution,
+        #                                                            0, ages_module.max_age, N_init_female)
+        # self.property_age[random_male] = ages_module.random_ages(ages_module.male_age_demograpy_distribution,
+        #                                                          0, ages_module.max_age, N_init_male)
+        # self.property_age_group1[random_people] = np.array([ages_module.assign_agegroup(age, self.age_groups1) for age in self.property_age[random_people]])
+        # self.property_age_group2[random_people] = np.array([ages_module.assign_agegroup(age, self.age_groups2) for age in self.property_age[random_people]])
+        ###
+
+        time_infected = np.random.exponential(self.doubling_time/np.log(2), self.N_init)
+        self.status_active[random_people] = 2
         self.status_susceptible[random_people] = 0
 
         # assign incubation
-        time_incubation = np.array([stats.lognorm.rvs(*self.distparams_incubation[i]) for i in self.property_age_group[random_people]])
+        time_incubation = np.array([stats.lognorm.rvs(*self.distparams_incubation[i]) for i in self.property_age_group1[random_people]])
         identify_incubation = (time_infected - time_incubation < 0.5)
         self.status_incubation[random_people[identify_incubation]] = 1
         self.period_incubation[random_people] = identify_incubation * time_infected
 
         # assign infectious
-        identify_infectious_start = (time_infected - np.array([self.param_infectious_start[i] for i in self.property_age_group[random_people]]) < 0.5)
-        identify_infectious_end = (time_infected-time_incubation - np.array([self.param_infectious_end[i] for i in self.property_age_group[random_people]]) < 0.5)
+        identify_infectious_start = (time_infected - np.array([self.param_infectious_start[i] for i in self.property_age_group1[random_people]]) < 0.5)
+        identify_infectious_end = (time_infected-time_incubation - np.array([self.param_infectious_end[i] for i in self.property_age_group1[random_people]]) < 0.5)
         self.period_infectious_start[random_people] = identify_infectious_start * time_infected
         self.period_infectious_end[random_people] = identify_infectious_end * time_infected
 
@@ -181,7 +201,7 @@ class Covid19():
         self.status_immune[random_people[~identify_infectious_end]] = 1
 
         # assign illness onset to hospitalization
-        time_onset = np.array([stats.lognorm.rvs(*self.distparams_onset2hosp[i]) for i in self.property_age_group[random_people]])
+        time_onset = np.array([stats.lognorm.rvs(*self.distparams_onset2hosp[i]) for i in self.property_age_group1[random_people]])
         identify_onset = (time_infected - (time_incubation + time_onset) < 0.5)
         self.period_onset[random_people] = (identify_onset & ~identify_incubation) * time_infected
         self.status_onset[random_people[identify_onset & ~identify_incubation]] = 1
@@ -259,7 +279,7 @@ class Covid19():
         self.N_immune = np.sum(self.status_immune)
         self.N_susceptible = np.sum(self.status_susceptible)
         self.N_deceased = np.sum(self.status_deceased)
-        self.N_symptoms += int(np.sum([np.sum(self.property_age_group[self.identify_incubation]==i) * (1.-self.ratio_asympt[i]) for i in range(self.number_of_age_groups)]))
+        self.N_symptoms += int(np.sum([np.sum(self.property_age_group1[self.identify_incubation]==i) * (1.-self.ratio_asympt[i]) for i in range(self.number_of_age_groups1)]))
 
         return self.N_susceptible, self.N_incubation, self.N_infectious, self.N_active, self.N_symptoms,\
                self.N_till_eof, self.N_hosp, self.N_icu, self.N_deceased, self.N_immune
@@ -277,23 +297,23 @@ class Covid19():
         Separates those who are onset into two groups of those that stay home(0) and those who need to be hospitalised(1).
         People from hosiptalised group(1) are further split into those who will stay severe(0), get critical(1) or die(2).
         '''
-        identify_onset_home = np.array([np.random.choice(2, p=[(1 - self.ratio_hosp[i]), self.ratio_hosp[i]]) for i in self.property_age_group[identify_onset]])
+        identify_onset_home = np.array([np.random.choice(2, p=[(1 - self.ratio_hosp[i]), self.ratio_hosp[i]]) for i in self.property_age_group1[identify_onset]])
         # stay at home or asymptomatic
         identify_home = identify_onset[identify_onset_home==0]
         self.status_home[identify_home] = 1
-        self.period_home_recovery[identify_home] = np.array([stats.lognorm.rvs(*self.distparams_home2recov[i]) for i in self.property_age_group[identify_home]])
+        self.period_home_recovery[identify_home] = np.array([stats.lognorm.rvs(*self.distparams_home2recov[i]) for i in self.property_age_group1[identify_home]])
         # go to hospital
         identify_hosp = identify_onset[identify_onset_home == 1]
-        identify_hosp_state = np.array([np.random.choice(3, p=[self.ratio_severe[i]/self.ratio_hosp[i], self.ratio_critic[i]/self.ratio_hosp[i], self.ratio_deceas[i]/self.ratio_hosp[i]]) for i in self.property_age_group[identify_hosp]])
+        identify_hosp_state = np.array([np.random.choice(3, p=[self.ratio_severe[i]/self.ratio_hosp[i], self.ratio_critic[i]/self.ratio_hosp[i], self.ratio_deceas[i]/self.ratio_hosp[i]]) for i in self.property_age_group1[identify_hosp]])
         identify_hosp_severe = identify_hosp[identify_hosp_state == 0]
         identify_hosp_critic = identify_hosp[identify_hosp_state == 1]
         identify_hosp_deceas = identify_hosp[identify_hosp_state == 2]
         self.status_hosp_deceas[identify_hosp_deceas] = 1
         self.status_hosp_critic[identify_hosp_critic] = 1
         self.status_hosp_severe[identify_hosp_severe] = 1
-        self.period_hosp_deceased[identify_hosp_deceas] = np.array([stats.lognorm.rvs(*self.distparams_hosp2decea[i]) for i in self.property_age_group[identify_hosp_deceas]])
-        self.period_hosp_deceased[identify_hosp_critic] = np.array([stats.lognorm.rvs(*self.distparams_hosp2recov_c[i]) for i in self.property_age_group[identify_hosp_critic]])
-        self.period_hosp_deceased[identify_hosp_severe] = np.array([stats.lognorm.rvs(*self.distparams_hosp2recov_s[i]) for i in self.property_age_group[identify_hosp_severe]])
+        self.period_hosp_deceased[identify_hosp_deceas] = np.array([stats.lognorm.rvs(*self.distparams_hosp2decea[i]) for i in self.property_age_group1[identify_hosp_deceas]])
+        self.period_hosp_deceased[identify_hosp_critic] = np.array([stats.lognorm.rvs(*self.distparams_hosp2recov_c[i]) for i in self.property_age_group1[identify_hosp_critic]])
+        self.period_hosp_deceased[identify_hosp_severe] = np.array([stats.lognorm.rvs(*self.distparams_hosp2recov_s[i]) for i in self.property_age_group1[identify_hosp_severe]])
 
     def print_state_info(self):
         print "Number of active (from infection to recovery): ", self.N_active
@@ -316,16 +336,16 @@ class Covid19():
         for con, prob in izip([con_family, con_others], [self.sar_family_daily, self.sar_others_daily]):
             if con.size == 0:
                 continue
-            identify_infected = np.array(con[(susceptible[con] == 1) & (np.random.random(size=con.size) < prob[self.property_age_group[con]])])
+            identify_infected = np.array(con[(susceptible[con] == 1) & (np.random.random(size=con.size) < prob[self.property_age_group1[con]])])
             if identify_infected.size == 0:
                 continue
             self.period_incubation[identify_infected] = np.array(
-                [stats.lognorm.rvs(*self.distparams_incubation[j]) for j in self.property_age_group[identify_infected]])
+                [stats.lognorm.rvs(*self.distparams_incubation[j]) for j in self.property_age_group1[identify_infected]])
             self.period_infectious_start[identify_infected] = self.param_infectious_start[
-                self.property_age_group[identify_infected]]
-            self.period_infectious_end[identify_infected] = self.period_incubation[identify_infected] + self.param_infectious_end[self.property_age_group[identify_infected]]
+                self.property_age_group1[identify_infected]]
+            self.period_infectious_end[identify_infected] = self.period_incubation[identify_infected] + self.param_infectious_end[self.property_age_group1[identify_infected]]
             self.period_onset[identify_infected] = self.period_incubation[identify_infected] + np.array(
-                [stats.lognorm.rvs(*self.distparams_onset2hosp[j]) for j in self.property_age_group[identify_infected]])
+                [stats.lognorm.rvs(*self.distparams_onset2hosp[j]) for j in self.property_age_group1[identify_infected]])
             self.status_susceptible[identify_infected] = 0
             self.status_active[identify_infected] = 1
             self.status_incubation[identify_infected] = 1
@@ -361,7 +381,8 @@ class Covid19():
         self.status_onset[identify_incubation] = 1
 
         if self.isolate_from_family and self.day >= self.day_isolate:
-            self.identify_isolated = np.random.choice(identify_incubation, int((1 - self.ratio_asympt)*identify_incubation.size), replace=False)
+            self.identify_isolated = np.array([np.random.choice(identify_incubation, size=int((1-self.ratio_asympt[i])*np.sum(self.property_age_group1[identify_incubation]==i)),
+                                                                replace=False) for i in range(self.number_of_age_groups1)]).flatten()
             self.status_isolated[self.identify_isolated] = 1
             self.connection_family_max[self.identify_isolated] = 0
 
